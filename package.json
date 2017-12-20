@@ -1,0 +1,24 @@
+{
+  "name": "coolSlider",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/coolSlider.js",
+  "directories": {
+    "example": "example",
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tzjvon/coolSlider.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tzjvon/coolSlider/issues"
+  },
+  "homepage": "https://github.com/tzjvon/coolSlider#readme"
+}
