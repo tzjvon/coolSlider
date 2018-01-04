@@ -1,35 +1,34 @@
+
+
+
 import util from "./../lib/Utils.js"
 
 import support_events, {evnets_funcs} from "./../lib/support_events.js"
 
-import "./../sass/index.scss"
-import {trf_x} from "./../lib/propto.js"
-// console.log(util.BROWSER_PREFIX)
-let trs = util.IU(util.BROWSER_PREFIX) + util.IU("transition")
+let trs = util.IU(util.BROWSER_PREFIX) + util.IU("transition"),
+	trf = util.IU(util.BROWSER_PREFIX) + util.IU("transform")
+
+function trf_x(dom, x) {dom.style[trf] = "translateZ(0) translateX("+ x +"px)"}
 
 
 
-let SS = function(el, opts) {
-	if (!util.isDom(el)) {throw new Error("SS first param must be a HTMLElement") }
+let coolSlider = function(el, opts) {
+	if (!util.isDom(el)) {throw new Error("coolSlider first param must be a HTMLElement") }
 
 	this.opts = {
 		loop: 0
 	}
 	util.extend(this.opts, opts)
 
-	if (!this.opts.data && this.opts.data.length < 2) {throw new Error("SS data param must can not empty and must be is string") }
+	if (!this.opts.data && this.opts.data.length < 2) {throw new Error("coolSlider data param must can not empty and must be is string") }
 
 	this.ul = document.createElement("ul")
 	el.appendChild(this.ul)
 	this.activeIndex = this.opts.activeIndex || 1
 	this.el = el
 	this.lis = []
-	this.insertData()
-	this.init()
-	this._bindHandler()
 	this.start_x = 0
 	this.start_y = 0
-
 
 	this.lock = false
 	this.isTraning = false
@@ -37,6 +36,9 @@ let SS = function(el, opts) {
 
 	this.evnets_funcs = evnets_funcs
 
+	this.insertData()
+	this.init()
+	this._bindHandler()
 }
 
 let propto = {
@@ -63,6 +65,9 @@ let propto = {
 	},
 	insertData: function () {
 		util.addClass(this.ul, "ss-outer")
+		this.grid_distance = parseFloat(getComputedStyle(this.ul).width)
+		// this.grid_distance = this.ul.getBoundingClientRect().width
+
 		this.opts.data.forEach(item => {
 			let li = document.createElement("li")
 			util.addClass(li, "ss-html")
@@ -72,8 +77,6 @@ let propto = {
 		})
 	},
 	init: function () {
-		this.grid_distance = this.ul.getBoundingClientRect().width
-
 		var {prevIndex, nextIndex} = this.computIndex()
 
 		this.prevEl = this.lis[prevIndex]
@@ -87,21 +90,16 @@ let propto = {
 		this.reStyle()
 
 	},
-
 	_start: function (e) {
-		// e.preventDefault()
-		// if (this.isTraning) {return}
+		if (this.isTraning) {return}
 		this.exec_once =0
 		this.lock = false
 		this.start_x = e.touches[0].pageX
 		this.start_y = e.touches[0].pageY
-
-		this.prevEl.style[trs] = ""
-		this.activeEl.style[trs] = ""
-		this.nextEl.style[trs] = ""
 	},
 	_move: function (e) {
 		if (this.lock || this.isTraning) {return}
+		e.preventDefault()
 
 		let m_x = e.touches[0].pageX,
 			m_y = e.touches[0].pageY,
@@ -111,20 +109,17 @@ let propto = {
 		if (this.exec_once === 0) {
 			if (Math.abs(m_dis_y) > Math.abs(m_dis_x)) {
 				this.lock = true
-				return e.preventDefault()
+				return ;
 			}
 		}
-		this.exec_once++
 
-		e.preventDefault()
+		this.exec_once++
 
 		trf_x(this.prevEl , m_dis_x - this.grid_distance)
 		trf_x(this.activeEl, m_dis_x)
 		trf_x(this.nextEl, this.grid_distance + m_dis_x)
-
 	},
 	_end: function (e) {
-			// console.log("touchend")
 		if (this.lock || this.isTraning) {return}
 
 		let end_x = e.changedTouches[0].pageX,
@@ -178,6 +173,9 @@ let propto = {
 		// this.nextEl.style[trs] = ""
 
 		setTimeout(function () {
+			this.prevEl.style[trs] = ""
+			this.activeEl.style[trs] = ""
+			this.nextEl.style[trs] = ""
 			this.slideTo(--this.activeIndex)
 			this.isTraning = false
 			this.fire("slideend")
@@ -194,13 +192,13 @@ let propto = {
 		this.nextEl.style[trs] = "200ms"
 
 		setTimeout(function () {
+			this.prevEl.style[trs] = ""
+			this.activeEl.style[trs] = ""
+			this.nextEl.style[trs] = ""
 			this.slideTo(++this.activeIndex)
 			this.isTraning = false
 			this.fire("slideend")
 		}.bind(this), 200)
-	},
-	initialLiClass: function () {
-		this.lis.forEach(item => {item.className = "ss-html"})
 	},
 	computIndex: function () {
 		let len = this.lis.length,
@@ -232,37 +230,39 @@ let propto = {
 	}
 }
 
-util.extend(SS.prototype, propto)
-util.extend(SS.prototype, support_events)
+util.extend(coolSlider.prototype, propto)
+util.extend(coolSlider.prototype, support_events)
 
-module.exports = SS
-
-
+module.exports = coolSlider
 
 
-// let el = document.getElementById("carrousel")
-// let list = [
-// 	{
-// 		content: "<div style='height: 100%;background:red;'></div>"
-// 	},
-// 	{
-// 		content: "<div style='height: 100%;background:blue;'></div>"
-// 	},
-// 	{
-// 		content: "<div style='height: 100%;background:pink;'></div>"
-// 	},
-// 	{
-// 		content: "<div style='height: 100%;background:yellow;'></div>"
-// 	}
-// ]
-// let S = new SS(el, {
-// 	data: list,
-// 	activeIndex: 2
-// })
-// S.on("slidestart", function () {
-// 	console.log("start")
-// })
-// S.on("slideend", function (e) {
-// 	console.log(e)
-// 	console.log("end")
-// })
+
+/******************** use **************************/
+// css
+import "./../sass/index.scss"
+let el = document.getElementById("carrousel")
+let list = [
+	{
+		content: "<div style='height: 100%;background:red;'></div>"
+	},
+	{
+		content: "<div style='height: 100%;background:blue;'></div>"
+	},
+	{
+		content: "<div style='height: 100%;background:pink;'></div>"
+	},
+	{
+		content: "<div style='height: 100%;background:yellow;'></div>"
+	}
+]
+let S = new coolSlider(el, {
+	data: list,
+	activeIndex: 2
+})
+S.on("slidestart", function () {
+	console.log("start")
+})
+S.on("slideend", function (index) {
+	console.log(index)
+	console.log("end")
+})
