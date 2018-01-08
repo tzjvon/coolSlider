@@ -14,11 +14,17 @@ function trf_x(dom, x) {dom.style[trf] = "translateZ(0) translateX("+ x +"px)"}
 
 let coolSlider = function(el, opts) {
 	if (!util.isDom(el)) {throw new Error("coolSlider first param must be a HTMLElement") }
+	this.timeout = null
 
 	this.opts = {
-		loop: 0
+		loop: 0,
+		interval: 4000,
+		duration: 200
 	}
 	util.extend(this.opts, opts)
+	this.intervalTime = this.opts.interval
+	this.duration = this.opts.duration
+	this.interval = null
 
 	if (!this.opts.data && this.opts.data.length < 2) {throw new Error("coolSlider data param must can not empty and must be is string") }
 
@@ -39,6 +45,8 @@ let coolSlider = function(el, opts) {
 	this.insertData()
 	this.init()
 	this._bindHandler()
+
+
 }
 
 let propto = {
@@ -89,9 +97,12 @@ let propto = {
 
 		this.reStyle()
 
+		this.loop()
 	},
 	_start: function (e) {
 		if (this.isTraning) {return}
+		clearTimeout(this.timeout)
+		clearInterval(this.interval)
 		this.exec_once =0
 		this.lock = false
 		this.start_x = e.touches[0].pageX
@@ -135,6 +146,14 @@ let propto = {
 		}
 
 		this.lock = false
+		this.loop()
+	},
+	loop: function () {
+		if (!!this.opts.loop) {
+			this.interval = setInterval(function() {
+				this.slideNext()
+			}.bind(this), this.intervalTime)
+		}
 	},
 	slideTo: function (index) {
 
@@ -169,18 +188,19 @@ let propto = {
 		trf_x(this.activeEl, this.grid_distance * 1)
 		trf_x(this.nextEl, this.grid_distance * 2)
 
-		this.prevEl.style[trs] = "200ms"
-		this.activeEl.style[trs] = "200ms"
+		let duration = this.duration + "ms"
+		this.prevEl.style[trs] = duration
+		this.activeEl.style[trs] = duration
 		// this.nextEl.style[trs] = ""
 
-		setTimeout(function () {
+		this.timeout = setTimeout(function () {
 			this.prevEl.style[trs] = ""
 			this.activeEl.style[trs] = ""
 			this.nextEl.style[trs] = ""
 			this.slideTo(--this.activeIndex)
 			this.isTraning = false
 			this.fire("slideend")
-		}.bind(this), 200)
+		}.bind(this), this.duration)
 	},
 	slideNext: function () {
 		this.isTraning = true
@@ -188,18 +208,19 @@ let propto = {
 		trf_x(this.activeEl, this.grid_distance * -1)
 		trf_x(this.nextEl, 0)
 
+		let duration = this.duration + "ms"
 		// this.prevEl.style[trs] = ""
-		this.activeEl.style[trs] = "200ms"
-		this.nextEl.style[trs] = "200ms"
+		this.activeEl.style[trs] = duration
+		this.nextEl.style[trs] = duration
 
-		setTimeout(function () {
+		this.timeout = setTimeout(function () {
 			this.prevEl.style[trs] = ""
 			this.activeEl.style[trs] = ""
 			this.nextEl.style[trs] = ""
 			this.slideTo(++this.activeIndex)
 			this.isTraning = false
 			this.fire("slideend")
-		}.bind(this), 200)
+		}.bind(this), this.duration)
 	},
 	computIndex: function () {
 		let len = this.lis.length,
@@ -240,8 +261,9 @@ module.exports = coolSlider
 
 /******************** use **************************/
 // css
-import "./../sass/index.scss"
-let el = document.getElementById("carrousel")
+import "./../styles/sass/index.scss"
+let el = document.body.appendChild(document.createElement("div"))
+el.className = "container"
 let list = [
 	{
 		content: "<div style='height: 100%;background:red;'></div>"
@@ -258,7 +280,10 @@ let list = [
 ]
 let S = new coolSlider(el, {
 	data: list,
-	activeIndex: 2
+	activeIndex: 2,
+	loop: 1,
+	// duration: 400,
+	interval: 5200
 })
 S.on("slidestart", function () {
 	console.log("start")
